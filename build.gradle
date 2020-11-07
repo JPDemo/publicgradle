@@ -1,0 +1,84 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version "${springBootVersion}"
+    id 'io.spring.dependency-management' version "${dependencyManagementVersion}"
+    id 'maven-publish'
+}
+
+allprojects {
+    group = 'jpdemo'
+    version = "${version}"
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        name = "proto GitHubPackages"
+        url = 'https://maven.pkg.github.com/JPDemo/proto'
+        credentials {
+            username = System.getenv("GITHUB_ACTOR")
+            password = System.getenv("GITHUB_TOKEN")
+        }
+    }
+    maven {
+        name = "private gradle"
+        url = 'https://maven.pkg.github.com/JPDemo/privategradle'
+        credentials {
+            username = System.getenv("GITHUB_ACTOR")
+            password = System.getenv("GITHUB_TOKEN")
+        }
+    }
+
+}
+dependencies{
+    annotationProcessor 'org.projectlombok:lombok'
+    implementation "jpdemo:proto:1.6"
+    implementation "jpdemo:privategradle:0.0.1-SNAPSHOT"
+    compile 'org.springframework.boot:spring-boot-starter'
+    // https://mvnrepository.com/artifact/io.projectreactor/reactor-core
+    testCompile group: 'io.projectreactor', name: 'reactor-test', version: '3.3.10.RELEASE'
+    testImplementation('org.springframework.boot:spring-boot-starter-test') {
+        exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+    }
+    testCompile 'org.assertj:assertj-core:3.11.1'
+}
+
+
+test {
+    useJUnitPlatform()
+}
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            from components.java
+        }
+    }
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = "https://maven.pkg.github.com/JPDemo/${project.name}"
+            credentials {
+                username = System.getenv("GITHUB_ACTOR")
+                password = System.getenv("GITHUB_TOKEN")
+            }
+        }
+    }
+}
+
+bootJar {
+    enabled = false
+}
+
+jar {
+    enabled = true
+    // Since this library is included as a jar in our jib projects, we want the
+    // jar to built reproducibly.
+    preserveFileTimestamps false
+    reproducibleFileOrder true
+}
